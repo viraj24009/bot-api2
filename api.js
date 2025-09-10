@@ -1,21 +1,37 @@
 import express from "express";
-import ytdl from "ytdl-core";
+import ytdl from "@distube/ytdl-core";
 
 const app = express();
 
+// ✅ Health check
 app.get("/", (req, res) => {
-  res.send("✅ YT Media API Running");
+  res.send("✅ YouTube API is running");
 });
 
-app.get("/download", async (req, res) => {
-  const url = req.query.url;
-  if (!ytdl.validateURL(url)) {
-    return res.status(400).json({ error: "Invalid YouTube URL" });
+// 🎥 Video + 🎵 Audio details endpoint
+app.get("/details", async (req, res) => {
+  try {
+    const { videoId } = req.query;
+    if (!videoId) return res.status(400).json({ error: "videoId required" });
+
+    const info = await ytdl.getInfo(videoId);
+    const videoFormats = ytdl.filterFormats(info.formats, "videoandaudio");
+    const audioFormats = ytdl.filterFormats(info.formats, "audioonly");
+
+    res.json({
+      title: info.videoDetails.title,
+      video: videoFormats.map(v => ({
+        qualityLabel: v.qualityLabel,
+        url: v.url
+      })),
+      audio: audioFormats.map(a => ({
+        quality: a.audioBitrate + "kbps",
+        url: a.url
+      }))
+    });
+  } catch (e) {
+    res.status(500).json({ error: "Failed to fetch details", details: e.message });
   }
-
-  res.header("Content-Disposition", 'attachment; filename="video.mp4"');
-  ytdl(url, { format: "mp4" }).pipe(res);
 });
 
-// Vercel me yahi chahiye:
 export default app;
