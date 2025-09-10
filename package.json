@@ -1,0 +1,10 @@
+{
+  "name": "yt-api",
+  "version": "1.0.0",
+  "main": "api.js",
+  "type": "module",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ytdl-core": "^4.11.5"
+  }
+}
